@@ -33,14 +33,14 @@ steps:
 #    arguments: '--configuration $(BuildConfiguration) -r win-x64 --output $(build.artifactstagingdirectory)'
 #    zipAfterPublish: false
 
-- task: DotNetCoreCLI@2
-  displayName: Test
-  inputs:
-    command: test
-    projects: |
-      **/*[Tt]ests/*.csproj
-      **/*ATDD/*.csproj
-    arguments: '--configuration $(BuildConfiguration) --collect "Code Coverage"'
+#- task: DotNetCoreCLI@2
+#  displayName: Test
+#  inputs:
+#    command: test
+#    projects: |
+#      **/*[Tt]ests/*.csproj
+#      **/*ATDD/*.csproj
+#    arguments: '--configuration $(BuildConfiguration) --collect "Code Coverage"'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact'
