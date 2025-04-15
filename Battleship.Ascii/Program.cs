@@ -10,6 +10,8 @@ namespace Battleship.Ascii
 
     public class Program
     {
+        private static Board myBoard;
+        private static Board enemyBoard;
         private static List<Ship> myFleet;
 
         private static List<Ship> enemyFleet;
@@ -138,16 +140,48 @@ namespace Battleship.Ascii
 
         private static void InitializeGame()
         {
+            InitializeBoard();
+
             InitializeMyFleet();
 
             InitializeEnemyFleet();
         }
 
+        private static void InitializeBoard(){
+            Console.WriteLine("Please enter a height and width for the board :");
+            
+            int height = 0;
+            while (height == 0 || height > 26) {
+                Console.WriteLine("Please enter a Height between 1-26: ");
+                if (!int.TryParse(Console.ReadLine(), out height))
+                {
+                    Console.WriteLine("Please enter an Integer");
+                }
+            }
+            int width = 0;
+            while (width == 0 || width > 26)
+            {
+                Console.WriteLine("Please enter a Width between 1-26: ");
+                if (!int.TryParse(Console.ReadLine(), out width))
+                {
+                    Console.WriteLine("Please enter an Integer");
+                }
+            }
+            // minimum volume of all ships is 17
+            if (height * width >= 18) {
+                myBoard = new Board(height, width);
+                enemyBoard = new Board(height, width);
+            }
+            else {
+                Console.WriteLine("Board not large enough to fit all ships. Minimum size must include at least 18 spots");
+                InitializeBoard();
+            }
+        }
         private static void InitializeMyFleet()
         {
             myFleet = GameController.InitializeShips().ToList();
 
-            Console.WriteLine("Please position your fleet (Game board size is from A to H and 1 to 8) :");
+            Console.WriteLine(String.Format("Please position your fleet (Game board size is from A to {0} and 1 to {1}) :",(Letters)myBoard.Height, myBoard.Width));
 
             foreach (var ship in myFleet)
             {

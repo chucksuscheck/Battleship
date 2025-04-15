@@ -30,7 +30,7 @@ namespace Battleship.GameController.Contracts
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the positions.
