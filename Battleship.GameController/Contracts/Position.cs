@@ -27,6 +27,8 @@
         /// </summary>
         public Position()
         {
+
+
         }
 
         #endregion

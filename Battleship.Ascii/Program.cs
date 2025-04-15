@@ -4,6 +4,7 @@ namespace Battleship.Ascii
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Net.WebSockets;
 	using Battleship.Ascii.TelemetryClient;
 	using Battleship.GameController;
 	using Battleship.GameController.Contracts;
@@ -15,6 +16,12 @@ namespace Battleship.Ascii
 		private static List<Ship> enemyFleet;
 
 		private static ITelemetryClient telemetryClient;
+
+		public enum Status
+		{
+			Miss = 1,
+			Hit = 2,
+		}
 
 		static void Main()
 		{
@@ -70,24 +77,40 @@ namespace Battleship.Ascii
 			Console.WriteLine(@"  |     /_\'");
 			Console.WriteLine(@"   \    \_/");
 			Console.WriteLine(@"    """"""""");
-
+			GameController gc = new GameController();
 			do
 			{
 				Console.WriteLine();
 				Console.WriteLine("Player, it's your turn");
 				Console.WriteLine("Enter coordinates for your shot :");
 				var position = ParsePosition(Console.ReadLine());
-				var isHit = GameController.CheckIsHit(enemyFleet, position);
+				var enemyStatuses = GameController.CheckIsHit(enemyFleet, position);
+
+				var isHit = enemyStatuses.Item1;
+				var isSunk = enemyStatuses.Item2;
+				var status = isHit ? (int)Status.Hit : (int)Status.Miss;
+
+				gc.RecordMove(position, status);
+
 				telemetryClient.TrackEvent("Player_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
 				if (isHit)
 				{
 					Explode();
 				}
+				if (isSunk)
+				{
+					// TODO: add actual ship
+					Console.WriteLine($"Ship was sunk");
+				}
 
 				Console.WriteLine(isHit ? "Yeah ! Nice hit !" : "Miss");
 
 				position = GetRandomPosition();
-				isHit = GameController.CheckIsHit(myFleet, position);
+				var myStatuses = GameController.CheckIsHit(myFleet, position);
+
+				isHit = myStatuses.Item1;
+				isSunk = myStatuses.Item2;
+
 				telemetryClient.TrackEvent("Computer_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
 				Console.WriteLine();
 				Console.WriteLine("Computer shot in {0}{1} and {2}", position.Column, position.Row, isHit ? "has hit your ship !" : "missed");
@@ -95,6 +118,11 @@ namespace Battleship.Ascii
 				{
 					Explode();
 
+				}
+				if (isSunk)
+				{
+					// TODO: add actual ship
+					Console.WriteLine($"Ship was sunk");
 				}
 			}
 			while (true);
@@ -153,7 +181,10 @@ namespace Battleship.Ascii
 				{
 					Console.WriteLine("Enter position {0} of {1} (i.e A3):", i, ship.Size);
 					var position = Console.ReadLine();
-					ship.AddPosition(position);
+
+					// TODO: invalid position check
+
+					ship.AddPositionAndHealth(position);
 					telemetryClient.TrackEvent("Player_PlaceShipPosition", new Dictionary<string, string>() { { "Position", position }, { "Ship", ship.Name }, { "PositionInShip", i.ToString() } });
 				}
 			}
@@ -169,21 +200,46 @@ namespace Battleship.Ascii
 			enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 7 });
 			enemyFleet[0].Positions.Add(new Position { Column = Letters.B, Row = 8 });
 
+
+			enemyFleet[0].Health.Add(new Position { Column = Letters.B, Row = 4 });
+			enemyFleet[0].Health.Add(new Position { Column = Letters.B, Row = 5 });
+			enemyFleet[0].Health.Add(new Position { Column = Letters.B, Row = 6 });
+			enemyFleet[0].Health.Add(new Position { Column = Letters.B, Row = 7 });
+			enemyFleet[0].Health.Add(new Position { Column = Letters.B, Row = 8 });
+
 			enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 6 });
 			enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 7 });
 			enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 8 });
 			enemyFleet[1].Positions.Add(new Position { Column = Letters.E, Row = 9 });
 
+			enemyFleet[1].Health.Add(new Position { Column = Letters.E, Row = 6 });
+			enemyFleet[1].Health.Add(new Position { Column = Letters.E, Row = 7 });
+			enemyFleet[1].Health.Add(new Position { Column = Letters.E, Row = 8 });
+			enemyFleet[1].Health.Add(new Position { Column = Letters.E, Row = 9 });
+
 			enemyFleet[2].Positions.Add(new Position { Column = Letters.A, Row = 3 });
 			enemyFleet[2].Positions.Add(new Position { Column = Letters.B, Row = 3 });
 			enemyFleet[2].Positions.Add(new Position { Column = Letters.C, Row = 3 });
+
+
+			enemyFleet[2].Health.Add(new Position { Column = Letters.A, Row = 3 });
+			enemyFleet[2].Health.Add(new Position { Column = Letters.B, Row = 3 });
+			enemyFleet[2].Health.Add(new Position { Column = Letters.C, Row = 3 });
 
 			enemyFleet[3].Positions.Add(new Position { Column = Letters.F, Row = 8 });
 			enemyFleet[3].Positions.Add(new Position { Column = Letters.G, Row = 8 });
 			enemyFleet[3].Positions.Add(new Position { Column = Letters.H, Row = 8 });
 
+
+			enemyFleet[3].Health.Add(new Position { Column = Letters.F, Row = 8 });
+			enemyFleet[3].Health.Add(new Position { Column = Letters.G, Row = 8 });
+			enemyFleet[3].Health.Add(new Position { Column = Letters.H, Row = 8 });
+
 			enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 5 });
 			enemyFleet[4].Positions.Add(new Position { Column = Letters.C, Row = 6 });
+
+			enemyFleet[4].Health.Add(new Position { Column = Letters.C, Row = 5 });
+			enemyFleet[4].Health.Add(new Position { Column = Letters.C, Row = 6 });
 		}
 	}
 }

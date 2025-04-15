@@ -12,6 +12,13 @@ namespace Battleship.GameController
 	/// </summary>
 	public class GameController
 	{
+		public Dictionary<Position, int> ActiveMoves { get; set; }
+
+		public GameController() 
+		{
+			ActiveMoves = new Dictionary<Position, int>();
+		}
+
 		/// <summary>
 		/// Checks the is hit.
 		/// </summary>
@@ -29,8 +36,10 @@ namespace Battleship.GameController
 		///     or
 		///     shot
 		/// </exception>
-		public static bool CheckIsHit(IEnumerable<Ship> ships, Position shot)
+		public static Tuple<bool, bool> CheckIsHit(IEnumerable<Ship> ships, Position shot)
 		{
+			var hitStatus = false;
+			var sunkStatus = false;
 			if (ships == null)
 			{
 				throw new ArgumentNullException("ships");
@@ -45,14 +54,32 @@ namespace Battleship.GameController
 			{
 				foreach (var position in ship.Positions)
 				{
+
 					if (position.Equals(shot))
 					{
-						return true;
+						// decrement health
+						ship.Health.Remove(shot);
+						hitStatus = true;
+						break;
 					}
 				}
+				sunkStatus = ship.IsSunk();
 			}
 
-			return false;
+			return new Tuple<bool, bool>(hitStatus, sunkStatus);
+		}
+		
+
+		public void RecordMove(Position move, int status)
+		{
+			if(ActiveMoves.TryGetValue(move, out int statusValue))
+			{
+				//throw error
+			}
+			else
+			{
+				ActiveMoves.Add(move, status);
+			}
 		}
 
 		/// <summary>
