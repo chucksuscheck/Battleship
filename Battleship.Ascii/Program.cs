@@ -52,6 +52,8 @@ namespace Battleship.Ascii
             Console.Clear();
             ConsoleHelper.DrawStartGame();
 			GameController gc = new GameController();
+			bool ContinueGame = true;
+			string Winner = "";
 
 			do
 			{
@@ -60,7 +62,14 @@ namespace Battleship.Ascii
 				Console.WriteLine("Player, it's your turn");
 				Console.WriteLine("Enter coordinates for your shot :");
 				var position = ParsePosition(Console.ReadLine());
-				var enemyStatuses = GameController.CheckIsHit(enemyFleet, position);
+				var enemyStatuses = GameController.CheckIsHit(enemyFleet, position, gc.ActiveEnemyShips);
+
+				if (gc.ActiveEnemyShips.Count<1)
+				{
+					Winner = "Player";
+                    ContinueGame = false;
+					break;
+				}
 
 				var isHit = enemyStatuses.Item1;
 				var isSunk = enemyStatuses.Item2;
@@ -84,9 +93,16 @@ namespace Battleship.Ascii
 				Console.WriteLine(isHit ? "Yeah ! Nice hit !" : "Miss");
 
 				position = GetRandomPosition();
-				var myStatuses = GameController.CheckIsHit(myFleet, position);
+				var myStatuses = GameController.CheckIsHit(myFleet, position, gc.ActivePlayerShips);
 
-				isHit = myStatuses.Item1;
+                if (gc.ActivePlayerShips.Count < 1)
+                {
+					Winner = "Enemy";
+                    ContinueGame = false;
+                    break;
+                }
+
+                isHit = myStatuses.Item1;
 				isSunk = myStatuses.Item2; 
 				
 				telemetryClient.TrackEvent("Computer_ShootPosition", new Dictionary<string, string>() { { "Position", position.ToString() }, { "IsHit", isHit.ToString() } });
@@ -109,8 +125,9 @@ namespace Battleship.Ascii
                 Console.WriteLine("-------------------------------------------");
                 Console.WriteLine();
 			}
-			while (true);
-		}
+			while (ContinueGame);
+            Console.WriteLine($"Game Over - {Winner} Wins");
+        }
 		private static void Explode()
 		{
 			Console.Beep();
@@ -183,6 +200,9 @@ namespace Battleship.Ascii
 		{
             Console.Clear();
 			myFleet = GameController.InitializeShips().ToList();
+
+			
+
             Console.ForegroundColor = ConsoleColor.Green;
 			Console.WriteLine(String.Format("Please position your fleet (Game board size is from A to {0} and 1 to {1}) :", (Letters)myBoard.Height, myBoard.Width));
 
@@ -193,10 +213,14 @@ namespace Battleship.Ascii
 				for (var i = 1; i <= ship.Size; i++)
 				{
 					Console.WriteLine("Enter position {0} of {1} (i.e A3):", i, ship.Size);
-					var position = Console.ReadLine();
 
-					// TODO: invalid position check
-					ship.AddPositionAndHealth(position);
+					// TEMP
+					// var position = Console.ReadLine();
+
+					var position = "A1";
+
+                    // TODO: invalid position check
+                    ship.AddPositionAndHealth(position);
 					telemetryClient.TrackEvent("Player_PlaceShipPosition", new Dictionary<string, string>() { { "Position", position }, { "Ship", ship.Name }, { "PositionInShip", i.ToString() } });
 				}
 			}

@@ -13,11 +13,15 @@ namespace Battleship.GameController
 	public class GameController
 	{
 		public Dictionary<Position, int> ActiveMoves { get; set; }
+		public List<string> ActivePlayerShips { get; set; }
+		public List<string> ActiveEnemyShips { get; set; }
 
 		public GameController()
 		{
 			ActiveMoves = new Dictionary<Position, int>();
-		}
+			ActivePlayerShips = new List<string> { "Aircraft Carrier", "Battleship", "Submarine", "Destroyer", "Patrol Boat" };
+			ActiveEnemyShips = new List<string> { "Aircraft Carrier", "Battleship", "Submarine", "Destroyer", "Patrol Boat" };
+        }
 
 		/// <summary>
 		/// Checks the is hit.
@@ -36,7 +40,7 @@ namespace Battleship.GameController
 		///     or
 		///     shot
 		/// </exception>
-		public static Tuple<bool, bool> CheckIsHit(IEnumerable<Ship> ships, Position shot)
+		public static Tuple<bool, bool> CheckIsHit(IEnumerable<Ship> ships, Position shot, List<string> remainingShips)
 		{
 			var hitStatus = false;
 			var sunkStatus = false;
@@ -63,7 +67,18 @@ namespace Battleship.GameController
 						break;
 					}
 				}
+				//todo - deprecate and remove sunkStatus
 				sunkStatus = ship.IsSunk();
+				if (ship.IsSunk())
+				{
+					remainingShips.Remove(ship.Name);
+                    Console.WriteLine($"{ship.Name} was sunk, {remainingShips.Count} ships remaining.");
+                }
+			}
+
+			if (remainingShips.Count < 1)
+			{
+				return null;
 			}
 
 			return new Tuple<bool, bool>(hitStatus, sunkStatus);
